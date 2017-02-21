@@ -33,6 +33,7 @@ function urlB64ToUint8Array(base64String) {
 
 
 function subscribeUser(onsuccess,onerror) {
+	 return new Promise(function(onsuccess,onerror){ 
     const applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
     swRegistration.pushManager.subscribe({
         userVisibleOnly: true,
@@ -47,10 +48,12 @@ function subscribeUser(onsuccess,onerror) {
     if (debug) console.log('Failed to subscribe the user: ', err);
     onerror({result:'internal',details:err,id:pushId,details:err});
     });
+    });
 }
 
 function unsubscribeUser(onsuccess,onerror) {
-    swRegistration.pushManager.getSubscription().then(function(subscription) {
+    return new Promise(function(onsuccess,onerror){ 
+		swRegistration.pushManager.getSubscription().then(function(subscription) {
         if (subscription) {
             return subscription.unsubscribe();
         }
@@ -62,32 +65,24 @@ function unsubscribeUser(onsuccess,onerror) {
            if (debug) console.log('User is unsubscribed.');
           onsuccess({result:'unsubscribed',id:pushId});
     });
+});
 }
 
-function subscribe() {
-    if (isSubscribed) {
-        unsubscribeUser();
-    } else {
-        subscribeUser();
-    }
-    // Set the initial subscription value
-    swRegistration.pushManager.getSubscription().then(function(subscription) {
-        isSubscribed = !(subscription === null);
-        updateSubscriptionOnServer(subscription);
-    });
-}
 
 // For safari
-function requestPermissions(onsuccess,onerror) {
+function requestPermissions() {
+    return new Promise(function(onsuccess,onerror){
     window.safari.pushNotification.requestPermission(wsURL, pushId, options.userId?{userId:options.userId}:{}, function(subscription) {
         if (debug) console.log(subscription);
         if(c.permission === 'granted') {
+			isSubscribed = true;
             onsuccess({result:'subscribed',id:pushId,subscription:subscription});
         }
         else if(c.permission === 'denied') {
             onerror({result:'denied',id:pushId})
         }
     });
+});
 }
 
 function nonSafariInit(onsuccess,onerror){
@@ -97,12 +92,12 @@ function nonSafariInit(onsuccess,onerror){
         navigator.serviceWorker.register('sw.js').then(function(swReg) {
            if (debug) console.log('Service Worker is registered', swReg);
             swRegistration = swReg;
-            onsuccess({result:'initialized',id:pushId,subscribe:function(_o,_e){
-			if (!isSubscribed) subscribeUser(_o||options.onsuccess,_e||options.onerror);
-			else  (_e||options.onerror)({result:'already_subscribed',id:pushId})
+            onsuccess({result:'initialized',id:pushId,subscribe:function(){
+			if (!isSubscribed) return subscribeUser();
+			else  return Promise.reject({result:'already_subscribed',id:pushId})
 		},unsubscribe:function(){
-			 if (isSubscribed) unsubscribeUser(_o||options.onsuccess,_e||options.onerror);
-			 else (_e||options.onerror)({result:'not_subscribed',id:pushId})
+			 if (isSubscribed) return unsubscribeUser(_o||options.onsuccess,_e||options.onerror);
+			 else return Promise.reject({result:'not_subscribed',id:pushId})
 			
 		},isSubcribed:function(){return isSubscribed}
 		})
@@ -122,12 +117,12 @@ function safariIniti(onsuccess,onerror) {
     
     if(pResult.permission === 'default') {
         //request permission
-        onsuccess({result:'initialized',id:pushId,subscribe:function(_o,_e){
-			if (!isSubscribed) requestPermissions(_o||onsuccess,_e||onerror);
-			else throw 'already subscribed'
+        onsuccess({result:'initialized',id:pushId,subscribe:function(){
+			if (!isSubscribed) return requestPermissions();
+			else return Promise.reject({result:'already_subscribed',id:pushId})
 		},unsubscribe:function(){
-			 if (isSubscribed) throw 'not supported';
-			 else throw 'not subscribed';
+			 if (isSubscribed) return Promise.reject({result:'not_supported',id:pushId})
+			 else return Promise.reject({result:'not_supported',id:pushId})
 			
 		}
 		,isSubcribed:function(){return isSubscribed}
@@ -136,9 +131,19 @@ function safariIniti(onsuccess,onerror) {
     } else if (pResult.permission === 'granted') {
         if (debug) console.log("Permission for " + pushId + " is " + pResult.permission);
         var token = pResult.deviceToken;
+        isSubscribed = true;
         // Show subscription for debug
         if (debug) console.log('Subscription details:',token);
-        onsuccess({result:'granted',id:pushId})
+        onsuccess({result:'initialized',id:pushId,subscribe:function(){
+			if (!isSubscribed) return requestPermissions();
+			else return Promise.reject({result:'already_subscribed',id:pushId})
+		},unsubscribe:function(){
+			 if (isSubscribed) return Promise.reject({result:'not_supported',id:pushId})
+			 else return Promise.reject({result:'not_supported',id:pushId})
+			
+		}
+		,isSubcribed:function(){return isSubscribed}
+		})
     } else if(pResult.permission === 'denied') {
         if (debug)("Permission for " + pushId + " is " + pResult.permission);
         onerror({result:'denied', id:pushId});

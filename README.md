@@ -5,7 +5,11 @@ Push API
 var m=new NotificationManager(applicationServerPublicKey,pushId,wsURL,onsuccess(event){
 if (event.result=='initialized') { 
 
-event.subscribe();
+if (!event.isSubscribed()) event.subscribe().then(...);
+else event.unsubscribe().then (...)
+
+
+
 }
 
 },onerror:function(event){

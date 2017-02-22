@@ -175,7 +175,7 @@ function safariIniti(onsuccess,onerror) {
 			else return Promise.reject({result:'already_subscribed',id:pushId})
 		},unsubscribe:function(){
 			 if (isSubscribed) return new Promise(function(ons,oner){
-				 ajax(wsURL+'/1.0/devices/'+token+'/registrations/'+pushId,'DELETE').then(x => ons({result:'unsubscribed',id:pushId})).catch(err => oner({result:'internal',details:err,id:pushId}));
+				 ajax(wsURL+'/v1/devices/'+token+'/registrations/'+pushId,'DELETE').then(x => ons({result:'unsubscribed',id:pushId})).catch(err => oner({result:'internal',details:err,id:pushId}));
 			 });
 			 else return Promise.reject({result:'not_supported',id:pushId})
 			

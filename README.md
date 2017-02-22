@@ -1,4 +1,4 @@
-# notiicationManager
+# notificationManager
 Push API
 
 <pre>

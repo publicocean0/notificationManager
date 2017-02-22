@@ -56,7 +56,7 @@ function ajax(url,method) {
  
 
 
-if (debug) console.log('%c WebPush script injected.', 'background: green; color: white; display: block; font-size:20px');
+if (debug) console.log('WebPush script injected.');
 
 function urlB64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);

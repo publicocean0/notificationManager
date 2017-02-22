@@ -14,5 +14,10 @@ else event.unsubscribe().then (...)
 
 },onerror:function(event){
 
-});
+},{...options...});
+
+where options are:
+debug:false|true
+userId:a basic value
+serviceWorkerName:
 <pre>

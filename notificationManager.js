@@ -7,7 +7,7 @@ var NotificationManager=function(applicationServerPublicKey,pushId,wsURL,options
 'use strict';
 if (typeof (options)!='object') options={};
 
-var debug=options.debug;
+var debug=options.debug||false;
 let isSubscribed = false;
 
 

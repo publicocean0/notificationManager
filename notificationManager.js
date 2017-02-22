@@ -138,7 +138,7 @@ function nonSafariInit(onsuccess,onerror){
     if ('serviceWorker' in navigator && 'PushManager' in window) {
         if (debug) console.log('Service Worker and Push is supported');
       
-        navigator.serviceWorker.register('sw.js').then(function(swReg) {
+        navigator.serviceWorker.register(options.serviceWorkerName||'sw.js').then(function(swReg) {
            if (debug) console.log('Service Worker is registered', swReg);
             swRegistration = swReg;
             onsuccess({result:'initialized',id:pushId,subscribe:function(){
